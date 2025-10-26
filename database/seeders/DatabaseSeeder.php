@@ -26,22 +26,13 @@ class DatabaseSeeder extends Seeder
         try {
             // Seed CSV data in dependency order
             $this->call([
-                MarketsSeeder::class,        // First - no dependencies
-                EventNamesSeeder::class,     // Second - no dependencies
-                LogServiceTitanJobsSeeder::class, // Third - depends on markets
-                LogEventsSeeder::class,      // Fourth - depends on markets and event_names
+                MarketsSeeder::class,
+                EventNamesSeeder::class,
+                LogServiceTitanJobsSeeder::class,
+                LogEventsSeeder::class,
+                RolesAndPermissionsSeeder::class,
+                UserSeeder::class,
             ]);
-
-            $this->command->newLine();
-
-            // Create test user
-            User::factory()->create([
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-                'role' => 'admin',
-            ]);
-
-            $this->command->info('✓ Created test admin user');
 
         } finally {
             // Re-enable foreign key checks

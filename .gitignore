@@ -25,6 +25,3 @@ Thumbs.db
 
 # Database data files
 database/data/*
-
-# Windows metadata files
-*:Zone.Identifier
