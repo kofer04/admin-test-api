@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
         ]);
 
-        $admin->assignRole('Admin');
+        $admin->assignRole('Super Admin');
 
         $this->command->info('✓ Created admin user');
         $this->command->info('Admin email: admin@example.com');

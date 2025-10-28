@@ -15,14 +15,18 @@ class RolesAndPermissionsSeeder extends Seeder
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create or update permissions
-        $allPermissions = collect($rolesPermissions)->flatten()->unique();
-        foreach ($allPermissions as $permissionName) {
-            Permission::updateOrCreate(['name' => $permissionName]);
-        }
+        $allConfigPermissions = collect($rolesPermissions)->flatten()->unique();
+        $allConfigRoles = collect($rolesPermissions)->keys();
 
-        // Create or update roles and sync permissions
+        Permission::whereNotIn('name', $allConfigPermissions)->delete();
+
+        Role::whereNotIn('name', $allConfigRoles)->delete();
+
         foreach ($rolesPermissions as $roleName => $permissions) {
+            foreach ($permissions as $permissionName) {
+                Permission::updateOrCreate(['name' => $permissionName]);
+            }
+
             $role = Role::updateOrCreate(['name' => $roleName]);
             $role->syncPermissions($permissions);
         }

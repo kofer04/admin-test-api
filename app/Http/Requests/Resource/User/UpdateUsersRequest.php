@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Requests\Role;
+namespace App\Http\Requests\Resource\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RetrieveRolesRequest extends FormRequest
+class UpdateUsersRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -22,8 +22,7 @@ class RetrieveRolesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|exists:users,id',
-            'load' => 'nullable|string',
+            //
         ];
     }
 }

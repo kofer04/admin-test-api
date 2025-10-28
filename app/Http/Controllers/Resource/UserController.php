@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Resource;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\User\FindUsersRequest;
-use App\Http\Requests\User\RetrieveUsersRequest;
-use App\Http\Requests\User\StoreUserRequest;
-use App\Http\Requests\User\UpdateUsersRequest;
+use App\Http\Requests\Resource\User\FindUsersRequest;
+use App\Http\Requests\Resource\User\RetrieveUsersRequest;
+use App\Http\Requests\Resource\User\StoreUserRequest;
+use App\Http\Requests\Resource\User\UpdateUsersRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Repositories\UserRepository;
@@ -29,7 +29,6 @@ class UserController extends Controller
     public function index(RetrieveUsersRequest $request): JsonResource
     {
         $this->authorize('viewAny', User::class);
-
         $users = $this->user->paginate($request->validated());
         return UserResource::collection($users);
     }

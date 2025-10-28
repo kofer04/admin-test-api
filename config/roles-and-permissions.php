@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\Permission;
+
 return [
 
     /*
@@ -14,18 +16,12 @@ return [
     */
 
     'roles' => [
-        'Admin' => [
-            'report:job-bookings:read',
-            'report:conversion-funnel:read',
-            'markets:read',
-            'markets:write',
-            'users:read',
-            'users:write',
-        ],
+        'Super Admin' => [],
         'Market User' => [
-            'report:job-bookings:read',
-            'report:conversion-funnel:read',
-            'markets:read',
+            Permission::ReadReportJobBookings->value,
+            Permission::ReadReportConversionFunnel->value,
+            Permission::MarketsRead->value,
+            Permission::MarketsWrite->value,
         ],
     ],
 
