@@ -20,6 +20,8 @@ return [
         'Market User' => [
             Permission::ReadReportJobBookings->value,
             Permission::ReadReportConversionFunnel->value,
+            Permission::ExportReportJobBookings->value,
+            Permission::ExportReportConversionFunnel->value,
             Permission::MarketsRead->value,
             Permission::MarketsWrite->value,
         ],

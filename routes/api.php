@@ -1,24 +1,28 @@
 <?php
 
-use App\Http\Controllers\Reports\ExportReportController;
-use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\Api\V1\Reports\ConversionFunnelController;
+use App\Http\Controllers\Api\V1\Reports\JobBookingsController;
 use App\Http\Controllers\Resource\RoleController;
-use App\Http\Controllers\Resource\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', fn(Request $request) => $request->user());
 
+    Route::prefix('/v1')->name('api.v1.')->group(function () {
+        /**
+         * Reports
+         */
+        Route::get('job-bookings', [JobBookingsController::class, 'index']) ->name('job-bookings.index');
+        Route::get('job-bookings/export', [JobBookingsController::class, 'export']) ->name('job-bookings.export');
 
-Route::group(['middleware' => 'auth:sanctum'], function () {
-    // Resource routes
-    Route::resource('users', UserController::class);
-    Route::resource('roles', RoleController::class);
+        Route::get('conversion-funnel', [ConversionFunnelController::class, 'index']) ->name('conversion-funnel.index');
+        Route::get('conversion-funnel/export', [ConversionFunnelController::class, 'export']) ->name('conversion-funnel.export');
 
-    Route::group(['prefix' => 'reports', 'as' => 'reports.'], function () {
-        Route::get('/', ReportController::class)->name('index');
-        Route::get('export', ExportReportController::class)->name('export');
+        /**
+         * Resources
+         */
+        Route::get('roles', [RoleController::class, 'index']) ->name('roles.index');
+
     });
 });

@@ -3,11 +3,19 @@ namespace App\Enums;
 
 enum Permission: string
 {
-    // Report permissions
+    /**
+     * Reports Permissions
+     */
     case ReadReportJobBookings = 'read-report:job-bookings';
-    case ReadReportConversionFunnel = 'read-report:conversion-funnel';
+    case ExportReportJobBookings = 'export-report:job-bookings';
 
-    // Market permissions
+
+    case ReadReportConversionFunnel = 'read-report:conversion-funnel';
+    case ExportReportConversionFunnel = 'export-report:conversion-funnel';
+
+    /**
+     * Resources Permissions
+     */
     case MarketsRead = 'markets:read';
     case MarketsWrite = 'markets:write';
 
