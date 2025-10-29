@@ -3,15 +3,20 @@
 namespace App\Repositories\Reports;
 
 use App\DTO\Reports\ReportFilterDTO;
-use App\Enums\ConversionFunnelStep;
+use App\Models\EventName;
 use App\Models\LogEvent;
 use App\Repositories\Repository;
+use App\Repositories\SettingsRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ConversionFunnelRepository extends Repository
 {
+    public function __construct(
+        private readonly SettingsRepository $settingsRepository
+    ) {}
+
     /**
      * Chart version – in-memory aggregation
      * Returns conversion funnel data grouped by market and step
@@ -20,22 +25,25 @@ class ConversionFunnelRepository extends Repository
     {
         $cacheKey = "conversion-funnel:{$filters->cacheKey()}";
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
-            $funnelSteps = ConversionFunnelStep::allInOrder();
-            $eventNameIds = ConversionFunnelStep::getEventNameIds();
+        $cachedData = Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
+            // Get funnel step event IDs from settings (in order)
+            $funnelStepIds = $this->getFunnelStepIds();
 
-            // Get unique session counts for each market and event, with event display names
+            // Get event names for the funnel steps
+            $eventNames = EventName::whereIn('id', $funnelStepIds)
+                ->get()
+                ->keyBy('id');
+
+            // Get unique session counts for each market and event
             $rawData = LogEvent::query()
                 ->select([
                     'markets.id as market_id',
                     'markets.name as market_name',
                     'log_events.event_name_id',
-                    'event_names.name as event_display_name',
                     DB::raw('COUNT(DISTINCT log_events.session_id) as unique_sessions')
                 ])
                 ->join('markets', 'log_events.market_id', '=', 'markets.id')
-                ->join('event_names', 'log_events.event_name_id', '=', 'event_names.id')
-                ->whereIn('log_events.event_name_id', $eventNameIds)
+                ->whereIn('log_events.event_name_id', $funnelStepIds)
                 ->when(
                     !empty($filters->marketIds),
                     fn($q) => $q->whereIn('log_events.market_id', $filters->marketIds)
@@ -44,13 +52,17 @@ class ConversionFunnelRepository extends Repository
                     $filters->startDate,
                     $filters->endDate,
                 ])
-                ->groupBy('markets.id', 'markets.name', 'log_events.event_name_id', 'event_names.name')
+                ->groupBy('markets.id', 'markets.name', 'log_events.event_name_id')
                 ->orderBy('markets.name')
                 ->get();
 
             // Transform into structured funnel data with conversion rates
-            return $this->calculateConversionRates($rawData, $funnelSteps);
+            return $this->calculateConversionRates($rawData, $funnelStepIds, $eventNames)
+                ->toArray(); // Convert to plain array for efficient caching
         });
+
+        // Return as Collection for consistent interface
+        return collect($cachedData);
     }
 
     /**
@@ -73,10 +85,24 @@ class ConversionFunnelRepository extends Repository
     }
 
     /**
+     * Get funnel step IDs from settings in order
+     */
+    private function getFunnelStepIds(): array
+    {
+        $settings = $this->settingsRepository->getGroup('conversion_funnel_step_');
+
+        // Convert to array and sort by key to maintain order (step_1, step_2, etc.)
+        $settingsArray = $settings->toArray();
+        ksort($settingsArray);
+
+        return array_values($settingsArray);
+    }
+
+    /**
      * Calculate conversion rates for each step relative to previous step
      * Step 1 is always 100% (base), subsequent steps show % of previous step that converted
      */
-    private function calculateConversionRates(Collection $rawData, array $funnelSteps): Collection
+    private function calculateConversionRates(Collection $rawData, array $funnelStepIds, Collection $eventNames): Collection
     {
         $groupedByMarket = $rawData->groupBy('market_id');
         $results = collect();
@@ -85,11 +111,13 @@ class ConversionFunnelRepository extends Repository
             $marketName = $marketData->first()->market_name;
             $previousStepCount = null;
 
-            foreach ($funnelSteps as $index => $step) {
-                $eventNameId = $step->value;
+            foreach ($funnelStepIds as $index => $eventNameId) {
                 $stepData = $marketData->firstWhere('event_name_id', $eventNameId);
                 $currentCount = $stepData?->unique_sessions ?? 0;
-                $eventDisplayName = $stepData?->event_display_name ?? 'Unknown Event';
+
+                // Get event name from EventName model
+                $eventName = $eventNames->get($eventNameId);
+                $eventDisplayName = $eventName?->name ?? 'Unknown Event';
 
                 // Calculate conversion percentage
                 if ($index === 0) {
@@ -107,7 +135,7 @@ class ConversionFunnelRepository extends Repository
                     'market_name' => $marketName,
                     'event_name_id' => $eventNameId,
                     'event_name' => $eventDisplayName,
-                    'step_number' => $step->stepNumber(),
+                    'step_number' => $index + 1,
                     'conversions_total' => $currentCount,
                     'conversions_percentage' => $percentage,
                 ]);

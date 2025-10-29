@@ -39,10 +39,16 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    /* Helper Methods */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('Super Admin');
+    }
+
     public function accessibleMarketIds(): array
     {
         return $this->isAdmin()
             ? Market::pluck('id')->toArray()
-            : $this->markets()->pluck('id')->toArray();
+            : $this->markets()->pluck('markets.id')->toArray();
     }
 }

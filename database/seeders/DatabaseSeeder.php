@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
                 LogEventsSeeder::class,
                 RolesAndPermissionsSeeder::class,
                 UserSeeder::class,
+                SettingsSeeder::class,
             ]);
 
         } finally {

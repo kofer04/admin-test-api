@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Market;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -23,6 +24,8 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
         ]);
 
+        // admin users has access to all markets
+
         $admin->assignRole('Super Admin');
 
         $this->command->info('✓ Created admin user');
@@ -33,11 +36,15 @@ class UserSeeder extends Seeder
         $this->command->info('Creating market user...');
         $this->command->newLine();
 
-        // Create market user
+        // Create market users
         $marketUser = User::factory()->create([
             'name' => 'Market User',
             'email' => 'market@example.com',
         ]);
+
+        $marketIds = Market::get()->take(5)->pluck('id')->toArray();
+
+        $marketUser->markets()->attach($marketIds);
 
         $marketUser->assignRole('Market User');
 

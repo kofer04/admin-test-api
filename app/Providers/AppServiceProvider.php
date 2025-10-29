@@ -12,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register SettingsRepository as singleton for performance
+        $this->app->singleton(\App\Repositories\SettingsRepository::class);
     }
 
     /**

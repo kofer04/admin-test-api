@@ -18,7 +18,7 @@ class JobBookingsRepository extends Repository
     {
         $cacheKey = "job-bookings:{$filters->cacheKey()}";
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
+        $cachedData = Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
             return LogServiceTitanJob::query()
                 ->select([
                     'markets.name as market_name',
@@ -38,8 +38,12 @@ class JobBookingsRepository extends Repository
                 ->groupBy('markets.id', 'markets.name', 'date')
                 ->orderBy('date')
                 ->orderBy('markets.name')
-                ->get();
+                ->get()
+                ->toArray(); // Convert to plain array for efficient caching
         });
+
+        // Return as Collection for consistent interface
+        return collect($cachedData);
     }
 
     /**

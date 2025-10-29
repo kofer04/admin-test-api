@@ -34,8 +34,8 @@ class JobBookingsChartAdapter
             return [
                 'label' => $marketName,
                 'data' => $dataPoints,
-                'borderColor' => $this->getColorForMarket($marketName),
-                'backgroundColor' => $this->getColorForMarket($marketName, 0.1),
+                // 'borderColor' => $this->getColorForMarket($marketName),
+                // 'backgroundColor' => $this->getColorForMarket($marketName, 0.1),
                 'tension' => 0.4, // Smooth line
             ];
         })->values()->toArray();

@@ -52,8 +52,8 @@ class ConversionFunnelChartAdapter
             return [
                 'label' => $marketName,
                 'data' => $dataPoints,
-                'backgroundColor' => $this->getColorForMarket($marketName),
-                'borderColor' => $this->getColorForMarket($marketName),
+                // 'backgroundColor' => $this->getColorForMarket($marketName),
+                // 'borderColor' => $this->getColorForMarket($marketName),
                 'borderWidth' => 1,
                 'dataLabels' => $dataLabels, // Custom labels for tooltips
             ];
