@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Resource;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Resource\User\FindUsersRequest;
-use App\Http\Requests\Resource\User\RetrieveUsersRequest;
-use App\Http\Requests\Resource\User\StoreUserRequest;
-use App\Http\Requests\Resource\User\UpdateUsersRequest;
+use App\Http\Requests\User\FindUsersRequest;
+use App\Http\Requests\User\RetrieveUsersRequest;
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUsersRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Repositories\UserRepository;

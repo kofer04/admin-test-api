@@ -1,13 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\V1\MarketController;
 use App\Http\Controllers\Api\V1\Reports\ConversionFunnelController;
 use App\Http\Controllers\Api\V1\Reports\JobBookingsController;
-use App\Http\Controllers\Resource\RoleController;
+use App\Http\Controllers\Api\V1\RoleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', fn(Request $request) => $request->user());
+    Route::get('/user', fn(Request $request) => $request->user()->load('markets'));
 
     Route::prefix('/v1')->name('api.v1.')->group(function () {
         /**
@@ -23,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
          * Resources
          */
         Route::get('roles', [RoleController::class, 'index']) ->name('roles.index');
+        Route::get('markets', [MarketController::class, 'index']) ->name('markets.index');
 
     });
 });

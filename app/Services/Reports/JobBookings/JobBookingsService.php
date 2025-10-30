@@ -2,7 +2,6 @@
 
 namespace App\Services\Reports\JobBookings;
 
-use App\DTO\Reports\ChartDataDTO;
 use App\DTO\Reports\ReportFilterDTO;
 use App\Repositories\Reports\JobBookingsRepository;
 use App\Services\Reports\Contracts\ReportServiceInterface;
@@ -21,12 +20,12 @@ class JobBookingsService implements ReportServiceInterface
     /**
      * Get chart data for Job Bookings
      */
-    public function getChartData(ReportFilterDTO $filters): ChartDataDTO
+    public function getChartData(ReportFilterDTO $filters): array
     {
         // 1. Get raw data from repository (with caching)
         $data = $this->repository->getData($filters);
 
-        // 2. Transform to chart format
+        // 2. Transform to flat array format
         return $this->chartAdapter->transform($data);
     }
 

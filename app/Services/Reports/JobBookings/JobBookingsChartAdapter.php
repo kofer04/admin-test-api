@@ -2,74 +2,47 @@
 
 namespace App\Services\Reports\JobBookings;
 
-use App\DTO\Reports\ChartDataDTO;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class JobBookingsChartAdapter
 {
     /**
-     * Transform raw DB data into line chart format
+     * Transform raw DB data into flat array format for flexible chart rendering
      *
      * Input: Collection of {market_name, date, bookings_count}
-     * Output: ChartDataDTO with labels (dates) and datasets (one per market)
+     * Output: Array of [{date, market-slug: count, ...}]
+     *
+     * Example: [
+     *   ['date' => 'Jan 1', 'pd-houston' => 5, 'pd-long-island' => 8],
+     *   ['date' => 'Jan 2', 'pd-houston' => 3, 'pd-long-island' => 12],
+     * ]
      */
-    public function transform(Collection $data): ChartDataDTO
+    public function transform(Collection $data): array
     {
-        // Get unique dates for X-axis
-        $labels = $data->pluck('date')->unique()->sort()->values()->toArray();
+        // Get unique dates for rows
+        $dates = $data->pluck('date')->unique()->sort()->values();
 
-        // Group by market to create separate lines
-        $groupedByMarket = $data->groupBy('market_name');
+        // Get unique markets and pre-compute slugs (performance optimization)
+        $markets = $data->pluck('market_name')->unique();
+        $marketSlugs = $markets->mapWithKeys(fn($name) => [$name => Str::slug($name)]);
 
-        // Create dataset for each market
-        $datasets = $groupedByMarket->map(function ($marketData, $marketName) use ($labels) {
-            // Map bookings to dates (fill missing dates with 0)
-            $bookingsByDate = $marketData->pluck('bookings_count', 'date')->toArray();
+        // Build lookup: [market_name][date] => bookings_count
+        $lookup = [];
+        foreach ($data as $row) {
+            $lookup[$row['market_name']][$row['date']] = $row['bookings_count'];
+        }
 
-            $dataPoints = array_map(
-                fn($date) => $bookingsByDate[$date] ?? 0,
-                $labels
-            );
+        // Build flat array: each date is a row with market columns
+        return $dates->map(function ($date) use ($markets, $marketSlugs, $lookup) {
+            $row = ['date' => Carbon::parse($date)->format('M d')];
 
-            return [
-                'label' => $marketName,
-                'data' => $dataPoints,
-                // 'borderColor' => $this->getColorForMarket($marketName),
-                // 'backgroundColor' => $this->getColorForMarket($marketName, 0.1),
-                'tension' => 0.4, // Smooth line
-            ];
+            foreach ($markets as $marketName) {
+                $row[$marketSlugs[$marketName]] = $lookup[$marketName][$date] ?? 0;
+            }
+
+            return $row;
         })->values()->toArray();
-
-        return new ChartDataDTO(
-            type: 'line',
-            labels: $labels,
-            datasets: $datasets,
-            options: [
-                'responsive' => true,
-                'plugins' => [
-                    'legend' => ['position' => 'top'],
-                    'title' => ['display' => true, 'text' => 'Job Bookings Over Time'],
-                ],
-                'scales' => [
-                    'y' => ['beginAtZero' => true],
-                ],
-            ]
-        );
-    }
-
-    private function getColorForMarket(string $marketName, float $alpha = 1): string
-    {
-        // Simple color assignment (can be improved with hash-based colors)
-        $colors = [
-            'rgba(255, 99, 132, %s)',   // Red
-            'rgba(54, 162, 235, %s)',   // Blue
-            'rgba(255, 206, 86, %s)',   // Yellow
-            'rgba(75, 192, 192, %s)',   // Green
-            'rgba(153, 102, 255, %s)',  // Purple
-        ];
-
-        $index = crc32($marketName) % count($colors);
-
-        return sprintf($colors[$index], $alpha);
     }
 }

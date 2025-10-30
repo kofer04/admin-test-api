@@ -2,127 +2,63 @@
 
 namespace App\Services\Reports\ConversionFunnel;
 
-use App\DTO\Reports\ChartDataDTO;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ConversionFunnelChartAdapter
 {
     /**
-     * Transform raw DB data into horizontal bar chart format for conversion funnel
+     * Transform raw DB data into flat array format for flexible chart rendering
      *
      * Input: Collection of {market_name, event_name, step_number, conversions_total, conversions_percentage}
-     * Output: ChartDataDTO with labels (event names) and datasets (one per market)
+     * Output: Array of [{event, step, market-slug: total, market-slug-percentage: percentage, ...}]
+     *
+     * Example: [
+     *   ['event' => 'Page View', 'step' => 1, 'pd-houston' => 1000, 'pd-houston-percentage' => 100.0, ...],
+     *   ['event' => 'Click CTA', 'step' => 2, 'pd-houston' => 500, 'pd-houston-percentage' => 50.0, ...],
+     * ]
      */
-    public function transform(Collection $data): ChartDataDTO
+    public function transform(Collection $data): array
     {
-        // Get unique event names for Y-axis (in step order)
-        $labels = $data->sortBy('step_number')
-            ->pluck('event_name')
-            ->unique()
-            ->values()
-            ->toArray();
+        // Get unique events (in step order) for rows
+        $events = $data->sortBy('step_number')
+            ->unique(fn($row) => $row['event_name'])
+            ->map(fn($row) => [
+                'event_name' => $row['event_name'],
+                'step_number' => $row['step_number']
+            ])
+            ->values();
 
-        // Group by market to create separate bars
-        $groupedByMarket = $data->groupBy('market_name');
+        // Get unique markets and pre-compute slugs (performance optimization)
+        $markets = $data->pluck('market_name')->unique();
+        $marketSlugs = $markets->mapWithKeys(fn($name) => [$name => Str::slug($name)]);
 
-        // Create dataset for each market with conversion labels
-        $datasets = $groupedByMarket->map(function ($marketData, $marketName) use ($labels) {
-            // Map conversions to events
-            $conversionsByEvent = $marketData->keyBy('event_name');
+        // Build lookup: [event_name][market_name] => {conversions_total, conversions_percentage}
+        $lookup = [];
+        foreach ($data as $row) {
+            $lookup[$row['event_name']][$row['market_name']] = [
+                'total' => $row['conversions_total'],
+                'percentage' => $row['conversions_percentage'],
+            ];
+        }
 
-            // Build data points with formatted labels showing percentage and count
-            $dataPoints = [];
-            $dataLabels = [];
+        // Build flat array: each event is a row with market columns (both total and percentage)
+        return $events->map(function ($eventData) use ($markets, $marketSlugs, $lookup) {
+            $row = [
+                'event' => $eventData['event_name'],
+                'step' => $eventData['step_number'],
+            ];
 
-            foreach ($labels as $eventName) {
-                $stepData = $conversionsByEvent->get($eventName);
-                if ($stepData) {
-                    $dataPoints[] = $stepData['conversions_total'];
-                    $dataLabels[] = sprintf(
-                        '%s%% (%s)',
-                        number_format($stepData['conversions_percentage'], 1),
-                        number_format($stepData['conversions_total'])
-                    );
-                } else {
-                    $dataPoints[] = 0;
-                    $dataLabels[] = '0% (0)';
-                }
+            foreach ($markets as $marketName) {
+                $marketSlug = $marketSlugs[$marketName];
+                $data = $lookup[$eventData['event_name']][$marketName] ?? ['total' => 0, 'percentage' => 0];
+
+                // Add both total and percentage for each market
+                $row[$marketSlug] = $data['total'];
+                $row["{$marketSlug}-percentage"] = $data['percentage'];
             }
 
-            return [
-                'label' => $marketName,
-                'data' => $dataPoints,
-                // 'backgroundColor' => $this->getColorForMarket($marketName),
-                // 'borderColor' => $this->getColorForMarket($marketName),
-                'borderWidth' => 1,
-                'dataLabels' => $dataLabels, // Custom labels for tooltips
-            ];
+            return $row;
         })->values()->toArray();
-
-        return new ChartDataDTO(
-            type: 'bar',
-            labels: $labels,
-            datasets: $datasets,
-            options: [
-                'indexAxis' => 'y', // Makes it horizontal
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'position' => 'top',
-                        'display' => true,
-                    ],
-                    'title' => [
-                        'display' => true,
-                        'text' => 'Conversion Funnel',
-                        'font' => ['size' => 16],
-                    ],
-                    'tooltip' => [
-                        'callbacks' => [
-                            'label' => '(context) => {
-                                const dataset = context.dataset;
-                                const dataIndex = context.dataIndex;
-                                const label = dataset.label || "";
-                                const value = dataset.dataLabels[dataIndex] || context.formattedValue;
-                                return label + ": " + value;
-                            }',
-                        ],
-                    ],
-                ],
-                'scales' => [
-                    'x' => [
-                        'beginAtZero' => true,
-                        'title' => [
-                            'display' => true,
-                            'text' => 'Number of Conversions',
-                        ],
-                    ],
-                    'y' => [
-                        'title' => [
-                            'display' => true,
-                            'text' => 'Funnel Steps',
-                        ],
-                    ],
-                ],
-            ]
-        );
-    }
-
-    private function getColorForMarket(string $marketName, float $alpha = 0.8): string
-    {
-        // Simple color assignment (can be improved with hash-based colors)
-        $colors = [
-            'rgba(255, 99, 132, %s)',   // Red
-            'rgba(54, 162, 235, %s)',   // Blue
-            'rgba(255, 206, 86, %s)',   // Yellow
-            'rgba(75, 192, 192, %s)',   // Green
-            'rgba(153, 102, 255, %s)',  // Purple
-            'rgba(255, 159, 64, %s)',   // Orange
-            'rgba(201, 203, 207, %s)',  // Gray
-        ];
-
-        $index = crc32($marketName) % count($colors);
-
-        return sprintf($colors[$index], $alpha);
     }
 }

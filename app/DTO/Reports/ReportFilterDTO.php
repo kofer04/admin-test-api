@@ -9,19 +9,25 @@ class ReportFilterDTO
 {
     public function __construct(
         public readonly array $marketIds,
-        public readonly Carbon $startDate,
-        public readonly Carbon $endDate,
+        public readonly string $startDate,
+        public readonly string $endDate,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
-        $startDate = data_get($request, 'start_date', null) ?? data_get($request, 'start', null) ?? now()->subDays(30);
-        $endDate = data_get($request, 'end_date', null) ?? data_get($request, 'end', null) ?? now();
+        // Get dates from request or use defaults (previous month - most likely to have data)
+        $startDate = $request->input('start_date')
+            ?? $request->input('start')
+            ?? now()->startOfMonth()->format('Y-m-d');
+
+        $endDate = $request->input('end_date')
+            ?? $request->input('end')
+            ?? now()->endOfMonth()->format('Y-m-d');
 
         return new self(
             marketIds: $request->input('market_ids', []),
-            startDate: Carbon::parse($startDate),
-            endDate: Carbon::parse($endDate),
+            startDate: self::normalizeDate($startDate),
+            endDate: self::normalizeDate($endDate),
         );
     }
 
@@ -29,8 +35,16 @@ class ReportFilterDTO
     {
         return md5(json_encode([
             'market_ids' => $this->marketIds,
-            'start_date' => $this->startDate->toDateString(),
-            'end_date' => $this->endDate->toDateString(),
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
         ]));
+    }
+
+    /**
+     * Normalize date to YYYY-MM-DD format
+     */
+    private static function normalizeDate(string $date): string
+    {
+        return Carbon::parse($date)->format('Y-m-d');
     }
 }

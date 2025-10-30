@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Resource\Role;
+namespace App\Http\Requests\Market;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RetrieveRolesRequest extends FormRequest
+class RetrieveMarketsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,8 +22,14 @@ class RetrieveRolesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|exists:users,id',
+            'paginate' => 'nullable|boolean',
+            'market_ids' => 'nullable|string|exists:markets,id',
             'load' => 'nullable|string',
+            'search' => 'nullable|string',
+            'page' => 'nullable|integer',
+            'per_page' => 'nullable|integer',
+            'sort' => 'nullable|string',
+            'sort_direction' => 'nullable|string',
         ];
     }
 }

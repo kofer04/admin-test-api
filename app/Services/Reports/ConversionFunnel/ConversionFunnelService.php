@@ -2,7 +2,6 @@
 
 namespace App\Services\Reports\ConversionFunnel;
 
-use App\DTO\Reports\ChartDataDTO;
 use App\DTO\Reports\ReportFilterDTO;
 use App\Repositories\Reports\ConversionFunnelRepository;
 use App\Services\Reports\Contracts\ReportServiceInterface;
@@ -21,12 +20,12 @@ class ConversionFunnelService implements ReportServiceInterface
     /**
      * Get chart data for Conversion Funnel
      */
-    public function getChartData(ReportFilterDTO $filters): ChartDataDTO
+    public function getChartData(ReportFilterDTO $filters): array
     {
         // 1. Get raw data from repository (with caching)
         $data = $this->repository->getData($filters);
 
-        // 2. Transform to chart format
+        // 2. Transform to flat array format
         return $this->chartAdapter->transform($data);
     }
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Resource;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Resource\Role\RetrieveRolesRequest;
+use App\Http\Requests\Role\RetrieveRolesRequest;
 use App\Http\Resources\RoleResource;
 use App\Repositories\RoleRepository;
 use Illuminate\Http\Resources\Json\JsonResource;

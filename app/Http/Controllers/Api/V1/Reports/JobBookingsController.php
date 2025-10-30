@@ -23,13 +23,11 @@ class JobBookingsController extends Controller
     public function index(ReportFilterRequest $request): JsonResponse
     {
         $this->authorize(Permission::ReadReportJobBookings->value);
-
         $filters = ReportFilterDTO::fromRequest($request);
         $chartData = $this->service->getChartData($filters);
-
-        return response()->json(
-            JobBookingsChartResource::make($chartData)
-        );
+        return response()->json([
+                'data' => $chartData
+        ]);
     }
 
     /**

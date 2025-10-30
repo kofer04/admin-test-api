@@ -48,11 +48,13 @@ abstract class Repository implements RepositoryContract
     {
         $perPage = data_get($params, 'per_page', 15);
 
+        $paginate = filter_var(data_get($params, 'paginate', true), FILTER_VALIDATE_BOOLEAN);
+
         $perPageInt = (int) $perPage;
 
         $query = $this->query($params);
 
-        if($perPageInt === -1) {
+        if(false === $paginate || $perPageInt === -1) {
             return $query->get();
         }
 

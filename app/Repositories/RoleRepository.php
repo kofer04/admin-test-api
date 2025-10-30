@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Facades\DB;
 
 class RoleRepository extends Repository
 {

@@ -5,9 +5,11 @@ namespace App\Repositories\Reports;
 use App\DTO\Reports\ReportFilterDTO;
 use App\Models\EventName;
 use App\Models\LogEvent;
+use App\Models\User;
 use App\Repositories\Repository;
 use App\Repositories\SettingsRepository;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,10 @@ class ConversionFunnelRepository extends Repository
         $cacheKey = "conversion-funnel:{$filters->cacheKey()}";
 
         $cachedData = Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
+            // Get accessible market IDs based on user role
+            $marketIds = $this->getAccessibleMarketIds($filters->marketIds);
+            \Log::info(__METHOD__ . ' marketIds: ' . json_encode($marketIds));
+
             // Get funnel step event IDs from settings (in order)
             $funnelStepIds = $this->getFunnelStepIds();
 
@@ -44,10 +50,7 @@ class ConversionFunnelRepository extends Repository
                 ])
                 ->join('markets', 'log_events.market_id', '=', 'markets.id')
                 ->whereIn('log_events.event_name_id', $funnelStepIds)
-                ->when(
-                    !empty($filters->marketIds),
-                    fn($q) => $q->whereIn('log_events.market_id', $filters->marketIds)
-                )
+                ->whereIn('log_events.market_id', $marketIds)
                 ->whereBetween('log_events.created_at', [
                     $filters->startDate,
                     $filters->endDate,
@@ -145,5 +148,26 @@ class ConversionFunnelRepository extends Repository
         }
 
         return $results;
+    }
+
+    /**
+     * Get accessible market IDs based on user role
+     * - If marketIds provided: use them (already filtered by request)
+     * - If empty: get from authenticated user's accessible markets
+     */
+    private function getAccessibleMarketIds(array $marketIds): array
+    {
+        if (!empty($marketIds)) {
+            return $marketIds;
+        }
+
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return [];
+        }
+
+        return $user->accessibleMarketIds();
     }
 }
