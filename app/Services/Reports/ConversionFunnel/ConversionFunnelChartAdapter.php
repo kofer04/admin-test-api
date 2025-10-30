@@ -20,8 +20,9 @@ class ConversionFunnelChartAdapter
      */
     public function transform(Collection $data): array
     {
-        // Get unique events (in step order) for rows
-        $events = $data->sortBy('step_number')
+        // Get unique events (in reverse step order for horizontal bar chart display)
+        // Reverse order so Step 5 renders first (bottom) and Step 1 renders last (top)
+        $events = $data->sortByDesc('step_number')
             ->unique(fn($row) => $row['event_name'])
             ->map(fn($row) => [
                 'event_name' => $row['event_name'],

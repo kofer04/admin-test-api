@@ -30,7 +30,6 @@ class ConversionFunnelRepository extends Repository
         $cachedData = Cache::remember($cacheKey, now()->addHour(), function () use ($filters) {
             // Get accessible market IDs based on user role
             $marketIds = $this->getAccessibleMarketIds($filters->marketIds);
-            \Log::info(__METHOD__ . ' marketIds: ' . json_encode($marketIds));
 
             // Get funnel step event IDs from settings (in order)
             $funnelStepIds = $this->getFunnelStepIds();

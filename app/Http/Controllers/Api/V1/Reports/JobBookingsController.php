@@ -26,7 +26,7 @@ class JobBookingsController extends Controller
         $filters = ReportFilterDTO::fromRequest($request);
         $chartData = $this->service->getChartData($filters);
         return response()->json([
-                'data' => $chartData
+                'data' => JobBookingsChartResource::collection($chartData)
         ]);
     }
 

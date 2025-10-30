@@ -24,9 +24,9 @@ class ConversionFunnelController extends Controller
         $filters = ReportFilterDTO::fromRequest($request);
         $chartData = $this->service->getChartData($filters);
 
-        return response()->json(
-            ConversionFunnelChartResource::make($chartData)
-        );
+        return response()->json([
+                'data' => ConversionFunnelChartResource::collection($chartData)
+        ]);
     }
 
     /**
