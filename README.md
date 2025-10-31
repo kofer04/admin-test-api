@@ -1,6 +1,6 @@
 # Admin Test API
 
-A Laravel-based API application for analytics and reporting.
+A Laravel-based REST API backend for analytics and reporting, designed to work with a Nuxt.js SPA frontend.
 
 ## System Requirements
 
@@ -140,18 +140,7 @@ Run the database migrations and seeders:
 
 You'll see progress indicators in the terminal as data is imported.
 
-### Step 7: (Optional) Install Node Dependencies and Build Assets
-
-If you plan to modify or use frontend assets, install Node dependencies and build the assets:
-
-```bash
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run build
-```
-
-> **Note:** This step is optional for API-only usage. The frontend assets are minimal and primarily used for development tooling.
-
-### Step 8: Verify Installation
+### Step 7: Verify Installation
 
 Once the seeding process completes successfully, your application is ready to use!
 
@@ -183,6 +172,21 @@ Two users are created during the seeding process:
 - **API Base URL:** `http://localhost:80`
 - **Database:** Accessible via port `3306` (MySQL)
 - **Redis:** Accessible via port `6379`
+
+## API Documentation
+
+This is the backend API. For the frontend application, please refer to the separate Nuxt.js repository.
+
+A comprehensive Postman collection is available for testing all API endpoints:
+
+**[📬 View Postman Collection](https://www.postman.com/maintenance-architect-20305400/workspace/dockering/collection/19157866-5569a731-c9f1-49dc-8521-af5f9cf9f1ea?action=share&creator=19157866&active-environment=19157866-815250de-ca09-42a3-ba88-9ffa1b98f56d)**
+
+The collection includes:
+- 🔐 Authentication endpoints (Login/Logout)
+- 📊 Report endpoints (Job Bookings, Conversion Funnel)
+- 🗂️ Resource endpoints (Markets, Users, Settings, Roles)
+- 📥 Export functionality for all data endpoints (CSV format)
+- ⚙️ Pre-configured environment variables for local development
 
 ## Useful Commands
 
