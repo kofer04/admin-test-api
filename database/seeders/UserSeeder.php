@@ -24,9 +24,13 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
         ]);
 
-        // admin users has access to all markets
-
         $admin->assignRole('Super Admin');
+
+        $marketIds = Market::get()->take(10)->pluck('id')->toArray();
+        // Skip attaching to markets, admin has access to all markets
+        $admin->setSetting('selected_markets', $marketIds);
+
+        // admin users has access to all markets
 
         $this->command->info('✓ Created admin user');
         $this->command->info('Admin email: admin@example.com');
@@ -42,15 +46,33 @@ class UserSeeder extends Seeder
             'email' => 'market@example.com',
         ]);
 
-        $marketIds = Market::get()->take(5)->pluck('id')->toArray();
-
-        $marketUser->markets()->attach($marketIds);
-
         $marketUser->assignRole('Market User');
 
+        $marketIds = Market::get()->take(10)->pluck('id')->toArray();
+        $marketUser->markets()->attach($marketIds);
+        $marketUser->setSetting('selected_markets', collect($marketIds)->take(5)->toArray());
+
         $this->command->info('✓ Created market user');
+        $this->command->info('Market user is assigned to ' . count($marketIds) . ' random markets');
         $this->command->info('Market email: market@example.com');
         $this->command->info('Market password: password');
+        $this->command->newLine();
+
+        $this->command->info('Creating dummy users...');
+        $this->command->newLine();
+
+        // Create 10 dummy users
+        $dummyUsers = User::factory()->count(10)->create();
+
+        foreach ($dummyUsers as $dummyUser) {
+            $dummyUser->assignRole('Market User');
+            $randomMarketIds = Market::get()->random(10)->pluck('id')->toArray();
+            $dummyUser->markets()->attach($randomMarketIds);
+            $dummyUser->setSetting('selected_markets', collect($randomMarketIds)->take(5)->toArray());
+        }
+
+        $this->command->info('✓ Created 10 dummy users');
+        $this->command->info('Dummy users are assigned to ' . count($randomMarketIds) . ' random markets');
         $this->command->newLine();
     }
 }

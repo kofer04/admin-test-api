@@ -3,10 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
-class SettingsRepository extends Repository
+class SettingRepository extends Repository
 {
     protected string $model = Setting::class;
 
@@ -128,6 +129,80 @@ class SettingsRepository extends Repository
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);
+    }
+
+    /**
+     * Set a setting for a specific user (creates or updates)
+     */
+    public function setForUser(User $user, string $key, mixed $value, ?string $description = null): Setting
+    {
+        $setting = Setting::forUser($user)->where('key', $key)->first();
+
+        if ($setting) {
+            // Update existing user setting
+            $setting->setTypedValue($value);
+            if ($description !== null) {
+                $setting->description = $description;
+            }
+            $setting->save();
+        } else {
+            // Create new user setting
+            $setting = new Setting(['key' => $key, 'description' => $description]);
+            $setting->setTypedValue($value);
+            $setting->owner()->associate($user);
+            $setting->save();
+        }
+
+        $this->clearCache();
+
+        return $setting;
+    }
+
+    /**
+     * Get a user setting value by key with optional default
+     * Falls back to system-wide setting if user setting doesn't exist
+     */
+    public function getForUser(User $user, string $key, mixed $default = null): mixed
+    {
+        // First, try to get user-specific setting
+        $userSetting = Setting::forUser($user)->where('key', $key)->first();
+        
+        if ($userSetting) {
+            return $userSetting->typed_value;
+        }
+
+        // Fall back to system-wide setting
+        $systemSetting = Setting::systemWide()->where('key', $key)->first();
+        
+        return $systemSetting ? $systemSetting->typed_value : $default;
+    }
+
+    /**
+     * Get all settings for a user (merges system-wide with user-specific)
+     * User-specific settings override system-wide settings
+     */
+    public function getAllForUser(User $user): Collection
+    {
+        $systemSettings = Setting::systemWide()->get();
+        $userSettings = Setting::forUser($user)->get();
+
+        // Start with system-wide settings
+        $merged = $systemSettings->keyBy('key');
+
+        // Override with user-specific settings
+        foreach ($userSettings as $userSetting) {
+            $merged->put($userSetting->key, $userSetting);
+        }
+
+        return $merged->values();
+    }
+
+    /**
+     * Get only user-specific settings (no system-wide)
+     */
+    public function getOnlyUserSettings(User $user): Collection
+    {
+        return Setting::forUser($user)->get();
     }
 }
 

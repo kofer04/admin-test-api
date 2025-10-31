@@ -4,7 +4,6 @@ namespace App\Services\Reports\JobBookings;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class JobBookingsChartAdapter
 {
@@ -12,7 +11,7 @@ class JobBookingsChartAdapter
      * Transform raw DB data into flat array format for flexible chart rendering
      *
      * Input: Collection of {market_name, date, bookings_count}
-     * Output: Array of [{date, market-slug: count, ...}]
+     * Output: Array of [{date, market-name: count, ...}]
      *
      * Example: [
      *   ['date' => 'Jan 1', 'pd-houston' => 5, 'pd-long-island' => 8],
@@ -24,9 +23,8 @@ class JobBookingsChartAdapter
         // Get unique dates for rows
         $dates = $data->pluck('date')->unique()->sort()->values();
 
-        // Get unique markets and pre-compute slugs (performance optimization)
+        // Get unique markets (already in slug format)
         $markets = $data->pluck('market_name')->unique();
-        $marketSlugs = $markets->mapWithKeys(fn($name) => [$name => Str::slug($name)]);
 
         // Build lookup: [market_name][date] => bookings_count
         $lookup = [];
@@ -35,11 +33,11 @@ class JobBookingsChartAdapter
         }
 
         // Build flat array: each date is a row with market columns
-        return $dates->map(function ($date) use ($markets, $marketSlugs, $lookup) {
+        return $dates->map(function ($date) use ($markets, $lookup) {
             $row = ['date' => Carbon::parse($date)->format('M d')];
 
             foreach ($markets as $marketName) {
-                $row[$marketSlugs[$marketName]] = $lookup[$marketName][$date] ?? 0;
+                $row[$marketName] = $lookup[$marketName][$date] ?? 0;
             }
 
             return $row;

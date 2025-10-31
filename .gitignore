@@ -25,3 +25,5 @@ Thumbs.db
 
 # Database data files
 database/data/*
+
+/.cursor/*

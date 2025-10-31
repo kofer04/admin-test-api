@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Market;
+use App\Models\Setting;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -43,6 +44,11 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    public function settings()
+    {
+        return $this->morphMany(Setting::class, 'owner', 'owner_type', 'owner_id');
+    }
+
     /* Helper Methods */
     public function isAdmin(): bool
     {
@@ -81,5 +87,46 @@ class User extends Authenticatable
             is_int($market) => $this->isAdmin() || in_array($market, $this->accessibleMarketIds()),
             default => throw new \InvalidArgumentException('Invalid market type'),
         };
+    }
+
+    /**
+     * Get a user setting value by key with optional default
+     * Falls back to system-wide setting if user setting doesn't exist
+     */
+    public function getSetting(string $key, mixed $default = null): mixed
+    {
+        // First, try to get user-specific setting
+        $userSetting = $this->settings()->where('key', $key)->first();
+        
+        if ($userSetting) {
+            return $userSetting->typed_value;
+        }
+
+        // Fall back to system-wide setting
+        $systemSetting = Setting::systemWide()->where('key', $key)->first();
+        
+        return $systemSetting ? $systemSetting->typed_value : $default;
+    }
+
+    /**
+     * Set a user setting value (creates or updates)
+     */
+    public function setSetting(string $key, mixed $value): Setting
+    {
+        $setting = $this->settings()->where('key', $key)->first();
+
+        if ($setting) {
+            // Update existing
+            $setting->setTypedValue($value);
+            $setting->save();
+        } else {
+            // Create new
+            $setting = new Setting(['key' => $key]);
+            $setting->setTypedValue($value);
+            $setting->owner()->associate($this);
+            $setting->save();
+        }
+
+        return $setting;
     }
 }

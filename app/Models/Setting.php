@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Setting extends Model
@@ -12,12 +13,22 @@ class Setting extends Model
         'value',
         'type',
         'description',
+        'owner_id',
+        'owner_type',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the owner of the setting (polymorphic relationship)
+     */
+    public function owner()
+    {
+        return $this->morphTo('owner', 'owner_type', 'owner_id');
+    }
 
     /**
      * Get the value with proper type casting
@@ -70,6 +81,24 @@ class Setting extends Model
     public function scopeByGroup($query, string $prefix)
     {
         return $query->where('key', 'LIKE', $prefix . '%');
+    }
+
+    /**
+     * Scope to filter settings for a specific user
+     */
+    public function scopeForUser($query, User $user)
+    {
+        return $query->where('owner_type', User::class)
+                     ->where('owner_id', $user->id);
+    }
+
+    /**
+     * Scope to filter system-wide settings (no owner)
+     */
+    public function scopeSystemWide($query)
+    {
+        return $query->whereNull('owner_id')
+                     ->whereNull('owner_type');
     }
 }
 

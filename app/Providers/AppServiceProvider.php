@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\SettingRepository;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,8 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register SettingsRepository as singleton for performance
-        $this->app->singleton(\App\Repositories\SettingsRepository::class);
+        // Register SettingRepository as singleton for performance
+        $this->app->singleton(SettingRepository::class);
     }
 
     /**

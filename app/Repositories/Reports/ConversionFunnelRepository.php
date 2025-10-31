@@ -7,7 +7,7 @@ use App\Models\EventName;
 use App\Models\LogEvent;
 use App\Models\User;
 use App\Repositories\Repository;
-use App\Repositories\SettingsRepository;
+use App\Repositories\SettingRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 class ConversionFunnelRepository extends Repository
 {
     public function __construct(
-        private readonly SettingsRepository $settingsRepository
+        private readonly SettingRepository $settingRepository
     ) {}
 
     /**
@@ -91,7 +91,7 @@ class ConversionFunnelRepository extends Repository
      */
     private function getFunnelStepIds(): array
     {
-        $settings = $this->settingsRepository->getGroup('conversion_funnel_step_');
+        $settings = $this->settingRepository->getGroup('conversion_funnel_step_');
 
         // Convert to array and sort by key to maintain order (step_1, step_2, etc.)
         $settingsArray = $settings->toArray();

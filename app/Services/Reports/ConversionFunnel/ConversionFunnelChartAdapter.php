@@ -3,7 +3,6 @@
 namespace App\Services\Reports\ConversionFunnel;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class ConversionFunnelChartAdapter
 {
@@ -11,7 +10,7 @@ class ConversionFunnelChartAdapter
      * Transform raw DB data into flat array format for flexible chart rendering
      *
      * Input: Collection of {market_name, event_name, step_number, conversions_total, conversions_percentage}
-     * Output: Array of [{event, step, market-slug: total, market-slug-percentage: percentage, ...}]
+     * Output: Array of [{event, step, market-name: total, market-name-percentage: percentage, ...}]
      *
      * Example: [
      *   ['event' => 'Page View', 'step' => 1, 'pd-houston' => 1000, 'pd-houston-percentage' => 100.0, ...],
@@ -20,9 +19,9 @@ class ConversionFunnelChartAdapter
      */
     public function transform(Collection $data): array
     {
-        // Get unique events (in reverse step order for horizontal bar chart display)
-        // Reverse order so Step 5 renders first (bottom) and Step 1 renders last (top)
-        $events = $data->sortByDesc('step_number')
+        // Get unique events (in step order for horizontal bar chart display)
+        // Sort by step number ascending so Step 1 appears at top
+        $events = $data->sortBy('step_number')
             ->unique(fn($row) => $row['event_name'])
             ->map(fn($row) => [
                 'event_name' => $row['event_name'],
@@ -30,9 +29,8 @@ class ConversionFunnelChartAdapter
             ])
             ->values();
 
-        // Get unique markets and pre-compute slugs (performance optimization)
+        // Get unique markets (already in slug format)
         $markets = $data->pluck('market_name')->unique();
-        $marketSlugs = $markets->mapWithKeys(fn($name) => [$name => Str::slug($name)]);
 
         // Build lookup: [event_name][market_name] => {conversions_total, conversions_percentage}
         $lookup = [];
@@ -44,19 +42,18 @@ class ConversionFunnelChartAdapter
         }
 
         // Build flat array: each event is a row with market columns (both total and percentage)
-        return $events->map(function ($eventData) use ($markets, $marketSlugs, $lookup) {
+        return $events->map(function ($eventData) use ($markets, $lookup) {
             $row = [
                 'event' => $eventData['event_name'],
                 'step' => $eventData['step_number'],
             ];
 
             foreach ($markets as $marketName) {
-                $marketSlug = $marketSlugs[$marketName];
                 $data = $lookup[$eventData['event_name']][$marketName] ?? ['total' => 0, 'percentage' => 0];
 
                 // Add both total and percentage for each market
-                $row[$marketSlug] = $data['total'];
-                $row["{$marketSlug}-percentage"] = $data['percentage'];
+                $row[$marketName] = $data['total'];
+                $row["{$marketName}-percentage"] = $data['percentage'];
             }
 
             return $row;
