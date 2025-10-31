@@ -29,6 +29,10 @@ class UserSeeder extends Seeder
         $marketIds = Market::get()->take(10)->pluck('id')->toArray();
         // Skip attaching to markets, admin has access to all markets
         $admin->setSetting('selected_markets', $marketIds);
+        $admin->setSetting('default_range_filter', [
+            'start' => now()->subDays(30)->format('Y-m-d'),
+            'end' => now()->format('Y-m-d'),
+        ]);
 
         // admin users has access to all markets
 
@@ -51,6 +55,10 @@ class UserSeeder extends Seeder
         $marketIds = Market::get()->take(10)->pluck('id')->toArray();
         $marketUser->markets()->attach($marketIds);
         $marketUser->setSetting('selected_markets', collect($marketIds)->take(5)->toArray());
+        $marketUser->setSetting('default_range_filter', [
+            'start' => now()->subDays(30)->format('Y-m-d'),
+            'end' => now()->format('Y-m-d'),
+        ]);
 
         $this->command->info('✓ Created market user');
         $this->command->info('Market user is assigned to ' . count($marketIds) . ' random markets');
@@ -69,6 +77,10 @@ class UserSeeder extends Seeder
             $randomMarketIds = Market::get()->random(10)->pluck('id')->toArray();
             $dummyUser->markets()->attach($randomMarketIds);
             $dummyUser->setSetting('selected_markets', collect($randomMarketIds)->take(5)->toArray());
+            $dummyUser->setSetting('default_range_filter', [
+                'start' => now()->subDays(30)->format('Y-m-d'),
+                'end' => now()->format('Y-m-d'),
+            ]);
         }
 
         $this->command->info('✓ Created 10 dummy users');
