@@ -18,7 +18,7 @@ class ConversionFunnelService implements ReportServiceInterface
     ) {}
 
     /**
-     * Get chart data for Conversion Funnel
+     * Get chart data and analytics for Conversion Funnel
      */
     public function getChartData(ReportFilterDTO $filters): array
     {
@@ -26,7 +26,15 @@ class ConversionFunnelService implements ReportServiceInterface
         $data = $this->repository->getData($filters);
 
         // 2. Transform to flat array format
-        return $this->chartAdapter->transform($data);
+        $chartData = $this->chartAdapter->transform($data);
+
+        // 3. Get analytics (will reuse cached data)
+        $analytics = $this->repository->getAnalytics($filters);
+
+        return [
+            'data' => $chartData,
+            'analytics' => $analytics,
+        ];
     }
 
     /**

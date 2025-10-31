@@ -17,15 +17,16 @@ class ConversionFunnelController extends Controller
     ) {}
 
     /**
-     * Get chart data for Conversion Funnel report
+     * Get chart data and analytics for Conversion Funnel report
      */
     public function index(ReportFilterRequest $request): JsonResponse
     {
         $filters = ReportFilterDTO::fromRequest($request);
-        $chartData = $this->service->getChartData($filters);
+        $result = $this->service->getChartData($filters);
 
         return response()->json([
-                'data' => ConversionFunnelChartResource::collection($chartData)
+            'data' => ConversionFunnelChartResource::collection($result['data']),
+            'analytics' => $result['analytics'],
         ]);
     }
 

@@ -87,6 +87,66 @@ class ConversionFunnelRepository extends Repository
     }
 
     /**
+     * Get analytics for Conversion Funnel report
+     * Uses cached data from getData() for performance
+     */
+    public function getAnalytics(ReportFilterDTO $filters): array
+    {
+        $data = $this->getData($filters);
+
+        if ($data->isEmpty()) {
+            return [
+                'overall_conversion_rate' => 0,
+                'total_completed' => 0,
+                'biggest_dropoff_step' => null,
+                'market_most_completions' => null,
+                'total_funnel_entries' => 0,
+            ];
+        }
+
+        // Get total number of steps to identify first and last steps
+        $totalSteps = $data->pluck('step_number')->unique()->count();
+
+        // Get Step 1 (funnel entries) and last step (completed) data
+        $step1Data = $data->where('step_number', 1);
+        $lastStepData = $data->where('step_number', $totalSteps);
+
+        // Calculate total funnel entries (Step 1 total across all markets)
+        $totalFunnelEntries = $step1Data->sum('conversions_total');
+
+        // Calculate total completed (last step total across all markets)
+        $totalCompleted = $lastStepData->sum('conversions_total');
+
+        // Calculate overall conversion rate (end-to-end)
+        $overallConversionRate = $totalFunnelEntries > 0
+            ? round(($totalCompleted / $totalFunnelEntries) * 100, 2)
+            : 0;
+
+        // Find step with biggest drop-off (lowest conversion percentage, excluding Step 1 which is always 100%)
+        $dropoffStep = $data->where('step_number', '>', 1)
+            ->sortBy('conversions_percentage')
+            ->first();
+
+        $biggestDropoffStep = $dropoffStep
+            ? $dropoffStep['event_name'] . ' (' . $dropoffStep['conversions_percentage'] . '%)'
+            : null;
+
+        // Find market with most completions (last step)
+        $topMarket = $lastStepData->sortByDesc('conversions_total')->first();
+        $marketMostCompletions = $topMarket
+            ? $topMarket['market_name']
+            : null;
+
+        return [
+            'overall_conversion_rate' => $overallConversionRate,
+            'total_completed' => $totalCompleted,
+            'biggest_dropoff_step' => $biggestDropoffStep,
+            'market_most_completions' => $marketMostCompletions,
+            'total_funnel_entries' => $totalFunnelEntries,
+        ];
+    }
+
+    /**
      * Get funnel step IDs from settings in order
      */
     private function getFunnelStepIds(): array
