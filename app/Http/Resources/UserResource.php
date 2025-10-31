@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
-use App\Http\Resources\MarketResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
@@ -19,14 +18,15 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at,
+            'is_admin' => $this->isAdmin(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-
-            'is_admin' => $this->isAdmin(),
-
+            
+            // Relationships (only included when loaded)
             'roles' => RoleResource::collection($this->whenLoaded('roles')),
             'markets' => MarketResource::collection($this->whenLoaded('markets')),
-
+            'settings' => SettingResource::collection($this->whenLoaded('settings')),
         ];
     }
 }

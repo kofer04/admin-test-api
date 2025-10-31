@@ -18,8 +18,10 @@ enum Permission: string
      */
     case MarketsRead = 'markets:read';
     case MarketsWrite = 'markets:write';
+    case MarketsExport = 'markets:export';
 
     // User permissions
     case UsersRead = 'users:read';
     case UsersWrite = 'users:write';
+    case UsersExport = 'users:export';
 }

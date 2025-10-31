@@ -9,41 +9,82 @@ class UserPolicy
 {
     /**
      * Determine whether the user can view any models.
+     * Super Admin or users with user:read permission.
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('user:read');
+        return $user->isAdmin() || $user->hasPermissionTo('user:read');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine whether the user can view a specific user.
+     * Super Admin or users with user:read permission.
+     * Users can also view their own profile.
      */
-    public function view(User $user): bool
+    public function view(User $user, User $model): bool
     {
-        return $user->hasPermissionTo('user:read');
+        // Users can always view their own profile
+        if ($user->id === $model->id) {
+            return true;
+        }
+
+        return $user->isAdmin() || $user->hasPermissionTo('user:read');
     }
 
     /**
      * Determine whether the user can create models.
+     * Super Admin or users with user:write permission.
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('user:write');
+        return $user->isAdmin() || $user->hasPermissionTo('user:write');
     }
 
     /**
      * Determine whether the user can update the model.
+     * Super Admin or users with user:write permission.
+     * Users can also update their own profile (with restrictions).
      */
     public function update(User $user, User $model): bool
     {
-        return $user->hasPermissionTo('user:write');
+        // Users can update their own profile
+        if ($user->id === $model->id) {
+            return true;
+        }
+
+        return $user->isAdmin() || $user->hasPermissionTo('user:write');
     }
 
     /**
      * Determine whether the user can delete the model.
+     * Only Super Admin or users with user:write permission.
+     * Users cannot delete themselves.
      */
-    public function delete(User $user): bool
+    public function delete(User $user, User $model): bool
     {
-        return $user->hasPermissionTo('user:write');
+        // Users cannot delete themselves
+        if ($user->id === $model->id) {
+            return false;
+        }
+
+        return $user->isAdmin() || $user->hasPermissionTo('user:write');
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     * Only Super Admin or users with user:write permission.
+     */
+    public function restore(User $user, User $model): bool
+    {
+        return $user->isAdmin() || $user->hasPermissionTo('user:write');
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     * Only Super Admin.
+     */
+    public function forceDelete(User $user, User $model): bool
+    {
+        return $user->isAdmin();
     }
 }

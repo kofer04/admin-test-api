@@ -23,7 +23,7 @@ return [
             Permission::ExportReportJobBookings->value,
             Permission::ExportReportConversionFunnel->value,
             Permission::MarketsRead->value,
-            Permission::MarketsWrite->value,
+            Permission::MarketsExport->value,
         ],
     ],
 

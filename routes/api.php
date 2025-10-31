@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Reports\ConversionFunnelController;
 use App\Http\Controllers\Api\V1\Reports\JobBookingsController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\SettingController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
          */
         Route::get('roles', [RoleController::class, 'index']) ->name('roles.index');
         Route::get('markets', [MarketController::class, 'index']) ->name('markets.index');
+        Route::get('markets/export', [MarketController::class, 'export']) ->name('markets.export');
+        Route::get('users', [UserController::class, 'index']) ->name('users.index');
+        Route::get('users/export', [UserController::class, 'export']) ->name('users.export');
 
         /**
          * User Settings
