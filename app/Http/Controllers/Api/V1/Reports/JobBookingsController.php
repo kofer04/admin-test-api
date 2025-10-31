@@ -18,15 +18,17 @@ class JobBookingsController extends Controller
     ) {}
 
     /**
-     * Get chart data for Job Bookings report
+     * Get chart data and analytics for Job Bookings report
      */
     public function index(ReportFilterRequest $request): JsonResponse
     {
         $this->authorize(Permission::ReadReportJobBookings->value);
         $filters = ReportFilterDTO::fromRequest($request);
-        $chartData = $this->service->getChartData($filters);
+        $result = $this->service->getChartData($filters);
+
         return response()->json([
-                'data' => JobBookingsChartResource::collection($chartData)
+            'data' => JobBookingsChartResource::collection($result['data']),
+            'analytics' => $result['analytics'],
         ]);
     }
 

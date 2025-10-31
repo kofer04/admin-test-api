@@ -18,7 +18,7 @@ class JobBookingsService implements ReportServiceInterface
     ) {}
 
     /**
-     * Get chart data for Job Bookings
+     * Get chart data and analytics for Job Bookings
      */
     public function getChartData(ReportFilterDTO $filters): array
     {
@@ -26,7 +26,15 @@ class JobBookingsService implements ReportServiceInterface
         $data = $this->repository->getData($filters);
 
         // 2. Transform to flat array format
-        return $this->chartAdapter->transform($data);
+        $chartData = $this->chartAdapter->transform($data);
+
+        // 3. Get analytics (will reuse cached data)
+        $analytics = $this->repository->getAnalytics($filters);
+
+        return [
+            'data' => $chartData,
+            'analytics' => $analytics,
+        ];
     }
 
     /**

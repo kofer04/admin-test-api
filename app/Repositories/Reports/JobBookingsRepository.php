@@ -6,6 +6,7 @@ use App\DTO\Reports\ReportFilterDTO;
 use App\Models\LogServiceTitanJob;
 use App\Models\User;
 use App\Repositories\Repository;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -84,6 +85,63 @@ class JobBookingsRepository extends Repository
                 'bookings_count' => $row->bookings_count,
             ];
         }
+    }
+
+    /**
+     * Get analytics for Job Bookings report
+     * Uses cached data from getData() for performance
+     */
+    public function getAnalytics(ReportFilterDTO $filters): array
+    {
+        $data = $this->getData($filters);
+
+        if ($data->isEmpty()) {
+            return [
+                'total_bookings' => 0,
+                'average_bookings' => 0,
+                'highest_market' => null,
+                'lowest_market' => null,
+                'highest_date' => null,
+            ];
+        }
+
+        // Calculate total bookings
+        $totalBookings = $data->sum('bookings_count');
+
+        // Calculate average bookings per day
+        $uniqueDates = $data->pluck('date')->unique()->count();
+        $averageBookings = $uniqueDates > 0 ? round($totalBookings / $uniqueDates, 2) : 0;
+
+        // Calculate bookings by market
+        $marketTotals = $data->groupBy('market_name')->map(function ($items) {
+            return $items->sum('bookings_count');
+        })->sortDesc();
+
+        // Get highest and lowest markets
+        $highestMarket = $marketTotals->keys()->first();
+        $lowestMarket = $marketTotals->keys()->last();
+
+        // Calculate bookings by date
+        $dateTotals = $data->groupBy('date')->map(function ($items, $date) {
+            return [
+                'date' => $date,
+                'count' => $items->sum('bookings_count'),
+            ];
+        })->sortByDesc('count')->values();
+
+        // Get highest date with formatted display
+        $highestDateData = $dateTotals->first();
+        $highestDate = $highestDateData 
+            ? Carbon::parse($highestDateData['date'])->format('M d, Y') . ' (' . $highestDateData['count'] . ')' 
+            : null;
+
+        return [
+            'total_bookings' => $totalBookings,
+            'average_bookings' => $averageBookings,
+            'highest_market' => $highestMarket,
+            'lowest_market' => $lowestMarket,
+            'highest_date' => $highestDate,
+        ];
     }
 
     /**
