@@ -4,14 +4,12 @@ namespace App\Models;
 
 use App\Models\Market;
 use App\Models\Setting;
-use Illuminate\Contracts\Database\Query\Builder;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Enums\RoleName;
 
 class User extends Authenticatable
 {
@@ -52,7 +50,7 @@ class User extends Authenticatable
     /* Helper Methods */
     public function isAdmin(): bool
     {
-        return $this->hasRole('Super Admin');
+        return $this->hasRole(RoleName::SuperAdmin->value);
     }
 
     /**
@@ -97,14 +95,14 @@ class User extends Authenticatable
     {
         // First, try to get user-specific setting
         $userSetting = $this->settings()->where('key', $key)->first();
-        
+
         if ($userSetting) {
             return $userSetting->typed_value;
         }
 
         // Fall back to system-wide setting
         $systemSetting = Setting::systemWide()->where('key', $key)->first();
-        
+
         return $systemSetting ? $systemSetting->typed_value : $default;
     }
 

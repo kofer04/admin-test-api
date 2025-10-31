@@ -37,7 +37,7 @@ class JobBookingsController extends Controller
      */
     public function export(ReportFilterRequest $request): StreamedResponse
     {
-        $this->authorize(Permission::ReadReportJobBookings->value);
+        $this->authorize(Permission::ExportReportJobBookings->value);
 
         $filters = ReportFilterDTO::fromRequest($request);
 

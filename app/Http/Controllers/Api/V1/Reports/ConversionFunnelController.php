@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Reports;
 
 use App\DTO\Reports\ReportFilterDTO;
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportFilterRequest;
 use App\Http\Resources\Reports\ConversionFunnelChartResource;
@@ -21,6 +22,7 @@ class ConversionFunnelController extends Controller
      */
     public function index(ReportFilterRequest $request): JsonResponse
     {
+        $this->authorize(Permission::ReadReportConversionFunnel->value);
         $filters = ReportFilterDTO::fromRequest($request);
         $result = $this->service->getChartData($filters);
 
@@ -35,6 +37,8 @@ class ConversionFunnelController extends Controller
      */
     public function export(ReportFilterRequest $request): StreamedResponse
     {
+        $this->authorize(Permission::ExportReportConversionFunnel->value);
+
         $filters = ReportFilterDTO::fromRequest($request);
 
         return $this->service->exportCsv($filters);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Enums\RoleName;
 
 return [
 
@@ -16,8 +17,8 @@ return [
     */
 
     'roles' => [
-        'Super Admin' => [],
-        'Market User' => [
+        RoleName::SuperAdmin->value => [],
+        RoleName::MarketUser->value => [
             Permission::ReadReportJobBookings->value,
             Permission::ReadReportConversionFunnel->value,
             Permission::ExportReportJobBookings->value,

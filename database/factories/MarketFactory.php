@@ -2,22 +2,19 @@
 
 namespace Database\Factories;
 
+use App\Models\Market;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Market>
- */
 class MarketFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Market::class;
+
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->company(),
+            'domain' => fake()->domainName(),
+            'path' => '/' . fake()->slug(),
         ];
     }
 }
